@@ -10,6 +10,19 @@ def insert_forecast_to_mssql(forecast_df):
         timeout=10
     )
     cursor = conn.cursor()
+    cursor.execute("""
+        IF NOT EXISTS (
+            SELECT * FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_NAME = 'FORECASTSALESAMOUNTBYDATE'
+        )
+        BEGIN
+            CREATE TABLE [dbo].[FORECASTSALESAMOUNTBYDATE] (
+                ds DATE NOT NULL,
+                y FLOAT
+            )
+        END
+        """)
+    conn.commit()
 
     for _, row in forecast_df.iterrows():
         cursor.execute(
