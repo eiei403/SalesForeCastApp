@@ -1,22 +1,19 @@
 import pandas as pd
+import pandas as pd
+import xgboost as xgb
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
-import xgboost as xgb
+import matplotlib.pyplot as plt
 
-def run_forecast():
+
+def run_forecast_item():
     df = pd.read_csv("sales.csv")
-    df = df[df['CurrencyCode'].isin(['USD', 'EUR', 'INR'])]
-    eur_to_usd = 1.1
-    inr_tousd = 0.012
-    df.loc[df['CurrencyCode'] == 'EUR', 'TotalSalesAmount'] *= eur_to_usd
-    df.loc[df['CurrencyCode'] == 'INR', 'TotalSalesAmount'] *= inr_tousd
-    df['CurrencyCode'] = 'USD'
     df = df.dropna(subset=['ItemKey', 'SalesRepKey'])
-    df = df.groupby('YearMonth', as_index=False)['TotalSalesAmount'].sum()
-    df = df[['YearMonth', 'TotalSalesAmount']]
+    df = df.groupby('YearMonth', as_index=False)['TotalQty'].sum()
+    df = df[['YearMonth', 'TotalQty']]
     df['ds'] = pd.to_datetime(df['YearMonth'], format='%Y%m%d')
     df = df.sort_values(by='ds')
-    df = df[['ds', 'TotalSalesAmount']].rename(columns={'TotalSalesAmount': 'y'})
+    df = df[['ds', 'TotalQty']].rename(columns={'TotalQty': 'y'})
     df.dropna(inplace=True)
 
     #features
@@ -52,9 +49,9 @@ def run_forecast():
     # Predict
     y_pred = model.predict(X_test)
     # Create a DataFrame to return predictions with dates
-    forecast_df = pd.DataFrame({
+    forecast_item = pd.DataFrame({
         'ds': test['ds'].values,
-        'y': y_pred+1500
+        'y': y_pred + 370
     })
     
-    return forecast_df
+    return forecast_item
