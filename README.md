@@ -25,12 +25,11 @@ streamlit run app.py
 <http://localhost:8501>
 ```
 
-[](https://github.com/user-attachments/assets/14abb28a-aa95-4d62-8abf-bf2bf1a8083c)
+![image](https://github.com/user-attachments/assets/0f075500-a7f0-420a-a601-bad5df79f0b1)
 
-after press run forecast
+หลังจากกด run forecast
+![image](https://github.com/user-attachments/assets/56ac3360-53ea-4d06-b259-c0e4dc534c99)
+![image](https://github.com/user-attachments/assets/92a1d8e3-21c2-4fa2-a0d0-e16de33c36f4)
 
-[](https://github.com/user-attachments/assets/15e09ff1-01f5-423d-98cc-e61706117596)
 
-[](https://github.com/user-attachments/assets/9ee0bd2e-0d3c-457e-904a-39a2ef14fae3)
-
-after confirmed ข้อมูลจะถูกส่งไปที่ mssql
+หลังconfirmed ข้อมูลจะถูกส่งไปที่ mssql
