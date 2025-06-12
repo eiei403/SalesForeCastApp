@@ -1,70 +1,77 @@
 import pyodbc
+import pandas as pd
+from sqlalchemy import create_engine,text
 
 def insert_forecast_to_mssql(forecast_df):
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=127.0.0.1,1433;'
-        'DATABASE=AXDW;'
-        'UID=U_user;'
-        'PWD=abc123+',
-        timeout=10
+    conn_str = create_engine(
+        "mssql+pyodbc://U_user:abc123+@127.0.0.1:1433/AXDW"
+        "?driver=ODBC+Driver+17+for+SQL+Server"
     )
-    cursor = conn.cursor()
-    cursor.execute("""
-        IF NOT EXISTS (
-            SELECT * FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'FORECASTSALESAMOUNTBYDATE'
-        )
-        BEGIN
-            CREATE TABLE [dbo].[FORECASTSALESAMOUNTBYDATE] (
-                ds DATE NOT NULL,
-                y FLOAT
-            )
-        END
-        """)
-    conn.commit()
 
-    for _, row in forecast_df.iterrows():
-        cursor.execute(
-            "INSERT INTO [dbo].[FORECASTSALESAMOUNTBYDATE] (ds, y) VALUES (?, ?)",
-            row['ds'], row['y']
+    create_table_sql = """
+    IF NOT EXISTS (
+        SELECT * FROM INFORMATION_SCHEMA.TABLES 
+        WHERE TABLE_NAME = 'FORECASTSALESAMOUNTBYDATE'
+    )
+    BEGIN
+        CREATE TABLE [dbo].[FORECASTSALESAMOUNTBYDATE] (
+            ds DATE NOT NULL,
+            y FLOAT
         )
+    END
+    """
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+    # ใช้ engine.begin() เพื่อเปิด transaction
+    with conn_str.begin() as conn:
+        conn.execute(text(create_table_sql))
+
+    forecast_df.to_sql(
+        name='FORECASTSALESAMOUNTBYDATE',  # ชื่อตาราง
+        con=conn_str,
+        if_exists='replace',                # หรือ 'replace' เพื่อเขียนทับ
+        index=False                        # ไม่เอา index ลงตาราง
+    )
 
 
 def insert_forecast_item_to_mssql(forecast_df):
-    conn = pyodbc.connect(
-        'DRIVER={ODBC Driver 17 for SQL Server};'
-        'SERVER=127.0.0.1,1433;'
-        'DATABASE=AXDW;'
-        'UID=U_user;'
-        'PWD=abc123+',
-        timeout=10
+    conn_str = create_engine(
+        "mssql+pyodbc://U_user:abc123+@127.0.0.1:1433/AXDW"
+        "?driver=ODBC+Driver+17+for+SQL+Server"
     )
-    cursor = conn.cursor()
-    cursor.execute("""
-        IF NOT EXISTS (
-            SELECT * FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'FORECASTITEMBYDATE'
-        )
-        BEGIN
-            CREATE TABLE [dbo].[FORECASTITEMBYDATE] (
-                ds DATE NOT NULL,
-                y FLOAT
+    create_table_sql = ("""
+            IF NOT EXISTS (
+                SELECT * FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_NAME = 'FORECASTITEMBYDATE'
             )
-        END
+            BEGIN
+                CREATE TABLE [dbo].[FORECASTITEMBYDATE] (
+                    ds DATE NOT NULL,
+                    y FLOAT
+                )
+            END
         """)
-    conn.commit()
+    with conn_str.begin() as conn:
+        conn.execute(text(create_table_sql))
 
-    for _, row in forecast_df.iterrows():
-        cursor.execute(
-            "INSERT INTO [dbo].[FORECASTITEMBYDATE] (ds, y) VALUES (?, ?)",
-            row['ds'], row['y']
-        )
+    forecast_df.to_sql(
+        name='FORECASTITEMBYDATE',  # ชื่อตาราง
+        con=conn_str,
+        if_exists='replace',                # หรือ 'replace' เพื่อเขียนทับ
+        index=False                        # ไม่เอา index ลงตาราง
+    )
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+
+def fetch_forecast_from_mssql():
+
+    conn_str = (
+        "mssql+pyodbc://U_user:abc123+@127.0.0.1:1433/AXDW"
+        "?driver=ODBC+Driver+17+for+SQL+Server"
+    )
+    
+    query = "SELECT * FROM [dbo].[AggMonthlySalesInvoiceLine4]"
+    df = pd.read_sql(query, conn_str)
+    
+    return df
+
+
+

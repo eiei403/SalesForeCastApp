@@ -1,69 +1,55 @@
 import streamlit as st
-from forecast import run_forecast
-from itemforecast import run_forecast_item
-from config import insert_forecast_to_mssql
-from config import insert_forecast_item_to_mssql
-import pandas as pd
+from forecast import plot as plot_sales, run_forecast
+from itemforecast import plot_item, run_forecast_item
+from config import insert_forecast_to_mssql, insert_forecast_item_to_mssql
 import matplotlib.pyplot as plt
 
+# Page setup
 st.set_page_config(page_title="Forecast Uploader", layout="centered")
-st.title("📈 Forecast to MSSQL")
+st.title("📈 Forecast Upload to MSSQL")
 
-if st.button("🔁 Run Forecast Sales & Upload"):
-    st.info("Running forecast...")
-    forecast_df = run_forecast()
-    
-    st.subheader("🔍 Preview Forecast Data")
-    # st.dataframe(forecast_df)
-    st.dataframe(forecast_df.head(10))
+# Initialize session state variables
+if 'forecast_sales_ready' not in st.session_state:
+    st.session_state.forecast_sales_ready = False
+if 'forecast_item_ready' not in st.session_state:
+    st.session_state.forecast_item_ready = False
 
-    # Visualize
-    st.subheader("📊 Forecast Visualization")
-    plt.figure(figsize=(12,6))
-    plt.plot(forecast_df['ds'], forecast_df['y'], label='XGBoost Forecast', marker='x')
-    plt.title('Forecast (XGBoost)')
-    plt.legend()
-    plt.grid()
-    plt.tight_layout()
+# ---------- SECTION 1: Forecast Sales ----------
+st.header("🧾 Forecast Sales")
 
-    st.pyplot(plt)
+if st.button("🔁 Run Forecast Sales"):
+    st.info("Running forecast for sales...")
+    st.session_state.forecast_df_sales = run_forecast()
+    st.session_state.forecast_sales_ready = True
+    st.success("✅ Forecast for sales completed.")
 
-    #confirm upload
-    if st.button("✅ Confirm Upload to SQL Server"):
-        insert_forecast_to_mssql(forecast_df)
-        st.success("📥 Uploaded to MSSQL Successfully!")
+if st.session_state.forecast_sales_ready:
+    st.subheader("📊 Sales Forecast Visualization")
+    fig = plot_sales()
+    st.pyplot(fig)
 
-    #st.info("Uploading to MSSQL...")
-    #insert_forecast_to_mssql(forecast_df)
+    if st.button("✅ Confirm Upload Sales Forecast to SQL Server"):
+        insert_forecast_to_mssql(st.session_state.forecast_df_sales)
+        st.success("📥 Sales Forecast Uploaded to MSSQL Successfully!")
 
-    #st.success("✅ Forecast uploaded successfully!")
+st.markdown("---")
 
-if st.button("🔁 Run Forecast Items & Upload"):
-    st.info("Running forecast...")
-    forecast_df = run_forecast_item()
-    
-    st.subheader("🔍 Preview Forecast Data")
-    # st.dataframe(forecast_df)
-    st.dataframe(forecast_df.head(10))
+# ---------- SECTION 2: Forecast Item ----------
+st.header("📦 Forecast Item")
 
-    # Visualize
-    st.subheader("📊 Forecast Item Visualization")
-    plt.figure(figsize=(12,6))
-    plt.plot(forecast_df['ds'], forecast_df['y'], label='XGBoost Forecast', marker='x')
-    plt.title('Forecast (XGBoost)')
-    plt.legend()
-    plt.grid()
-    plt.tight_layout()
+if st.button("🔁 Run Forecast Item"):
+    st.info("Running forecast for items...")
+    st.session_state.forecast_df_item = run_forecast_item()
+    st.session_state.forecast_item_ready = True
+    st.success("✅ Forecast for items completed.")
 
-    st.pyplot(plt)
+if st.session_state.forecast_item_ready:
+    st.subheader("📊 Item Forecast Visualization")
+    fig = plot_item()
+    st.pyplot(fig)
 
-    #confirm upload
-    if st.button("✅ Confirm Upload to SQL Server"):
-        insert_forecast_item_to_mssql(forecast_df)
-        st.success("📥 Uploaded to MSSQL Successfully!")
+    if st.button("✅ Confirm Upload Item Forecast to SQL Server"):
+        insert_forecast_item_to_mssql(st.session_state.forecast_df_item)
+        st.success("📥 Item Forecast Uploaded to MSSQL Successfully!")
 
-    #st.info("Uploading to MSSQL...")
-    #insert_forecast_to_mssql(forecast_df)
-
-    #st.success("✅ Forecast uploaded successfully!")
-    
+st.markdown("---")
